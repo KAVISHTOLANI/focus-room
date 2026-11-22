@@ -26,6 +26,8 @@ describe('Focus Room workflow', () => {
   it('runs a focus block for a task and logs it', async () => {
     localStorage.setItem('focus-room:settings', JSON.stringify({ focusMin: 1, shortMin: 1, longMin: 2, cyclesBeforeLong: 4, autoStartNext: false }));
     localStorage.setItem('focus-room:sound', 'false');
+    localStorage.setItem('focus-room:history', '[]');
+    localStorage.setItem('focus-room:tasks', '[]');
     localStorage.setItem('focus-room:timer', JSON.stringify({ phase: 'focus', status: 'idle', remainingMs: 60000, endsAt: null, startedAt: null, cycleCount: 0 }));
     window.location.hash = '/timer';
     vi.useFakeTimers({ shouldAdvanceTime: true });
@@ -58,7 +60,14 @@ describe('Focus Room workflow', () => {
     expect(screen.getByText(/Less than a minute/)).toBeInTheDocument();
   });
 
+  it('opens with labelled demo sessions', () => {
+    window.location.hash = '/history';
+    render(<App />);
+    expect(screen.getAllByText('Demo data').length).toBeGreaterThan(0);
+  });
+
   it('shows empty history with a path back to the timer', () => {
+    localStorage.setItem('focus-room:history', '[]');
     window.location.hash = '/history';
     render(<App />);
     expect(screen.getByText('No focus sessions yet')).toBeInTheDocument();

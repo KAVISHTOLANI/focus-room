@@ -1,17 +1,3 @@
-.hero-timer {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: center;
-  padding: 18px 0;
-}
-.hero-clock {
-  font-size: 4.5rem;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
 .timer-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
@@ -34,15 +20,6 @@
   --accent: #0f766e;
   --accent-soft: color-mix(in srgb, #0f766e 12%, var(--surface));
   --accent-text: #0f766e;
-}
-.clock {
-  font-size: clamp(4rem, 14vw, 7.5rem);
-  font-weight: 800;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-  letter-spacing: -0.03em;
-  padding: 10px 0;
 }
 .current-task {
   text-align: center;
@@ -109,4 +86,117 @@
 }
 .narrow {
   max-width: 760px;
+}
+
+/* ---------- Ring timer ---------- */
+.ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  margin: 0 auto;
+  max-width: 100%;
+}
+.ring svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.ring-track {
+  fill: none;
+  stroke: var(--surface-3);
+  stroke-width: 6;
+}
+.ring-fill {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 6;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.6s linear;
+}
+.ring.is-active::before {
+  content: '';
+  position: absolute;
+  inset: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%);
+  animation: breathe 6s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(0.94);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+}
+.ring-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+.ring-clock,
+.clock {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.ring-clock {
+  font-size: 3.4rem;
+}
+.clock {
+  font-size: clamp(3.6rem, 9vw, 4.8rem);
+  padding: 4px 0;
+}
+.clock-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 6px 0;
+}
+.hero-timer {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 24px;
+  align-items: center;
+}
+.ht-task {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  margin: 4px 0 10px;
+}
+.ht-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  align-items: end;
+  height: 70px;
+  margin-top: 18px;
+}
+.ht-week span {
+  background: var(--accent);
+  border-radius: 3px 3px 0 0;
+  opacity: 0.85;
+}
+@media (max-width: 520px) {
+  .hero-timer {
+    grid-template-columns: 1fr;
+  }
+}
+.timer-card.status-running {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 10%, transparent), var(--shadow);
+}
+.timer-card .progress {
+  display: none;
+}
+.hero-timer .progress {
+  display: block;
 }

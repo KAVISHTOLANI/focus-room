@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { EmptyState, Field, Landing, NotFound, Notice, Shell, uid, useFlash, usePersistentState, useRoute } from './shared/ui';
+import { DemoTag, EmptyState, Field, Landing, NotFound, Notice, Shell, uid, useFlash, usePersistentState, useRoute } from './shared/ui';
 import { formatDay, toISO } from './lib/dates';
 import { dayOf, lastNDays, minutesOn, streakDays, validateTask, type FocusSession, type Task } from './lib/history';
 import {
@@ -44,13 +44,37 @@ function chime() {
   }
 }
 
+function demoHistory(): FocusSession[] {
+  const out: FocusSession[] = [];
+  const titles = ['Demo: Revise lecture notes', 'Demo: Write cover letter', null];
+  const counts = [2, 3, 0, 4, 1, 3, 2];
+  for (let i = 6; i >= 0; i--) {
+    const count = counts[6 - i];
+    for (let k = 0; k < count; k++) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      d.setHours(9 + k, 0, 0, 0);
+      if (i === 0 && d.getTime() > Date.now()) d.setTime(Date.now() - (count - k) * 35 * 60_000);
+      const early = k === 1 && i % 3 === 0;
+      out.push({ id: `demo-${i}-${k}`, taskId: null, taskTitle: titles[k % 3], startedAt: d.getTime(), endedAt: d.getTime() + 25 * 60_000, minutes: early ? 12 : 25, completed: !early });
+    }
+  }
+  return out.reverse();
+}
+
+const DEMO_TASKS: Task[] = [
+  { id: 'demo-t1', title: 'Demo: Revise lecture notes', estimate: 4, done: 3, finished: false },
+  { id: 'demo-t2', title: 'Demo: Write cover letter for the summer research placement application', estimate: 2, done: 0, finished: false },
+  { id: 'demo-t3', title: 'Demo: Tidy reference list', estimate: 1, done: 1, finished: true },
+];
+
 export default function App() {
   const [route] = useRoute();
   const [settings, setSettings] = usePersistentState<Settings>('focus-room:settings', DEFAULT_SETTINGS);
   const [timer, setTimer] = usePersistentState<TimerState>('focus-room:timer', () => initial(DEFAULT_SETTINGS));
-  const [tasks, setTasks] = usePersistentState<Task[]>('focus-room:tasks', []);
-  const [history, setHistory] = usePersistentState<FocusSession[]>('focus-room:history', []);
-  const [activeTask, setActiveTask] = usePersistentState<string>('focus-room:active-task', '');
+  const [tasks, setTasks] = usePersistentState<Task[]>('focus-room:tasks', DEMO_TASKS);
+  const [history, setHistory] = usePersistentState<FocusSession[]>('focus-room:history', demoHistory);
+  const [activeTask, setActiveTask] = usePersistentState<string>('focus-room:active-task', 'demo-t1');
   const [sound, setSound] = usePersistentState('focus-room:sound', true);
   const [now, setNow] = useState(() => Date.now());
   const [flash, setFlash] = useFlash(6000);
@@ -151,43 +175,84 @@ export default function App() {
   else page = <NotFound />;
 
   return (
-    <Shell name="Focus Room" mark="FR" nav={NAV} route={route}>
+    <Shell name="Focus Room" wordmark={['Focus', 'Room']} nav={NAV} route={route} cta={{ to: '/timer', label: 'Start focusing' }}>
       {page}
     </Shell>
+  );
+}
+
+function Ring({ pct, size = 280, children, active }: { pct: number; size?: number; children: React.ReactNode; active?: boolean }) {
+  const r = size / 2 - 8;
+  const c = 2 * Math.PI * r;
+  return (
+    <div className={`ring ${active ? 'is-active' : ''}`} style={{ width: size, height: size }}>
+      <svg viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+        <circle cx={size / 2} cy={size / 2} r={r} className="ring-track" />
+        <circle cx={size / 2} cy={size / 2} r={r} className="ring-fill" strokeDasharray={c} strokeDashoffset={c * (1 - pct / 100)} transform={`rotate(-90 ${size / 2} ${size / 2})`} />
+      </svg>
+      <div className="ring-inner">{children}</div>
+    </div>
+  );
+}
+
+function HeroTimer() {
+  // A real countdown using the same timer logic as the app, started mid-block for the preview.
+  const [t] = useState(() => start({ ...initial(DEFAULT_SETTINGS), remainingMs: 18 * 60_000 + 42_000 }, Date.now()));
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const left = remaining(t, now);
+  const pct = ((25 * 60_000 - left) / (25 * 60_000)) * 100;
+  return (
+    <div className="hero-timer">
+      <Ring pct={pct} size={230} active>
+        <span className="label-mono">Focus · 2 of 4</span>
+        <span className="ring-clock">{formatClock(left)}</span>
+      </Ring>
+      <div className="ht-side">
+        <div>
+          <span className="label-mono">Working on</span>
+          <p className="ht-task">Revise lecture notes</p>
+          <div className="progress"><span style={{ width: '75%' }} /></div>
+          <p className="hint">3 of 4 focus blocks done</p>
+        </div>
+        <div className="ht-week" aria-label="Focus minutes, last 7 days (demo)">
+          {[50, 75, 0, 100, 25, 75, 50].map((m, i) => (
+            <span key={i} style={{ height: `${Math.max(m, 4)}%`, ['--i' as string]: i }} className="grow-in" />
+          ))}
+        </div>
+        <p className="hint">Focus minutes · last 7 days</p>
+      </div>
+    </div>
   );
 }
 
 function Home() {
   return (
     <Landing
-      eyebrow="Focus timer"
-      title="Work in focused blocks, rest on schedule, and see where your time went."
-      lead="A Pomodoro-style timer with configurable focus and break lengths. Pick a task before you start and every completed block is logged against it."
-      actions={
-        <>
-          <a className="btn btn-primary" href="#/timer">Start focusing</a>
-          <a className="btn" href="#/settings">Adjust the cycle</a>
-        </>
-      }
-      preview={
-        <div className="hero-timer" aria-hidden="true">
-          <span className="badge badge-accent">Focus · block 2 of 4</span>
-          <div className="hero-clock">18:42</div>
-          <div className="muted small">Working on: Draft report introduction</div>
-        </div>
-      }
+      eyebrow="Focus timer · Pomodoro method"
+      title={<>One task. One block. <em>Then rest.</em></>}
+      lead="A calm focus timer with configurable focus and break lengths. Choose a task before you start; every completed block is logged against it, and your daily totals build up in History."
+      primary={{ href: '#/timer', label: 'Start focusing' }}
+      secondary={{ href: '#/history', label: 'View history' }}
+      previewLabel="Focus block in progress"
+      preview={<HeroTimer />}
       steps={[
-        { title: 'Add a task', body: 'Write what you will work on and estimate how many focus blocks it needs.' },
-        { title: 'Start the timer', body: 'Focus until the chime, then take the break. A long break follows every few blocks.' },
+        { title: 'Pick a task', body: 'Write what you will work on and estimate how many focus blocks it needs.' },
+        { title: 'Focus, then break', body: 'Work until the chime, take the break. A long break follows every few blocks.' },
         { title: 'Review your day', body: 'History shows daily focus totals and every session you logged.' },
       ]}
+      stepsIntro="The timer keeps accurate time even when the tab is hidden, and survives a page reload mid-block."
       features={[
-        { title: 'Configurable cycle', body: 'Set focus, short break and long break lengths and how many blocks come before a long break.' },
-        { title: 'Accurate in background tabs', body: 'The timer uses the clock, not tick counting, so it stays correct when the tab is hidden.' },
+        { title: 'Configurable cycle', body: 'Focus, short break and long break lengths, and blocks before a long break.' },
+        { title: 'Obvious active state', body: 'A progress ring, the page title and a calm running indicator show a block is underway.' },
         { title: 'Task progress', body: 'Each task shows completed vs estimated focus blocks.' },
-        { title: 'Daily totals', body: 'A seven-day chart of focused minutes and a list of sessions.' },
+        { title: 'Daily totals', body: 'A seven-day chart of focused minutes and a table of sessions.' },
       ]}
       note="Keyboard: press Space on the Timer page to start or pause. Browsers may block the chime until you have interacted with the page."
+      closing={{ title: <>Start a <em>25-minute block.</em></>, action: { href: '#/timer', label: 'Open the timer' } }}
     />
   );
 }
@@ -240,14 +305,27 @@ function TimerPage(props: {
   const block = timer.phase === 'focus' ? timer.cycleCount + 1 : timer.cycleCount;
 
   return (
+    <>
+    <div className="page-head">
+      <div>
+        <p className="eyebrow">Workspace · Timer</p>
+        <h1>{timer.status === 'running' ? <>In <em>focus</em></> : <>Ready to <em>focus</em></>}</h1>
+        <p>{timer.status === 'running' ? 'Notifications off, phone away. You’ve got this block.' : 'Pick a task, then start the block. Space starts and pauses.'}</p>
+      </div>
+    </div>
     <div className="timer-layout">
-      <section className={`card timer-card phase-${timer.phase}`} aria-label="Timer">
+      <section className={`card timer-card phase-${timer.phase} status-${timer.status}`} aria-label="Timer">
         <div className="row row-between">
           <span className="badge badge-accent">{PHASE_LABEL[timer.phase]}{timer.phase === 'focus' ? ` · block ${block} of ${settings.cyclesBeforeLong}` : ''}</span>
           <span className="small muted">{timer.status === 'paused' ? 'Paused' : timer.status === 'running' ? 'Running' : 'Ready'}</span>
         </div>
-        <div className="clock" role="timer" aria-live="off" data-testid="clock">{formatClock(left)}</div>
-        <div className="progress" aria-hidden="true"><span style={{ width: `${pct}%` }} /></div>
+        <div className="clock-wrap">
+          <Ring pct={pct} size={300} active={timer.status === 'running'}>
+            <span className="label-mono">{timer.status === 'running' ? 'In session' : timer.status === 'paused' ? 'Paused' : 'Ready'}</span>
+            <div className="clock" role="timer" aria-live="off" data-testid="clock">{formatClock(left)}</div>
+            <span className="hint">of {settings[timer.phase === 'focus' ? 'focusMin' : timer.phase === 'short' ? 'shortMin' : 'longMin']} min</span>
+          </Ring>
+        </div>
         <p className="muted small current-task">
           {timer.phase === 'focus' ? (current ? <>Working on: <strong>{current.title}</strong></> : 'No task selected — the session will be logged without one.') : 'Step away from the screen for a moment.'}
         </p>
@@ -286,7 +364,7 @@ function TimerPage(props: {
                 <li key={t.id} className={`task ${t.id === activeTask ? 'is-active' : ''}`}>
                   <label className="check">
                     <input type="radio" name="active-task" checked={t.id === activeTask} onChange={() => setActiveTask(t.id)} />
-                    <span>{t.title}</span>
+                    <span>{t.title.replace('Demo: ', '')} {t.id.startsWith('demo') && <DemoTag />}</span>
                   </label>
                   <span className={`badge ${t.done >= t.estimate ? 'badge-ok' : ''}`}>{t.done}/{t.estimate} blocks</span>
                   <button type="button" className="btn btn-sm" onClick={() => setTasks((ts) => ts.map((x) => (x.id === t.id ? { ...x, finished: true } : x)))} aria-label={`Mark ${t.title} finished`}>Done</button>
@@ -306,6 +384,7 @@ function TimerPage(props: {
         </section>
       </div>
     </div>
+    </>
   );
 }
 
@@ -333,11 +412,13 @@ function History({ history, setHistory }: { history: FocusSession[]; setHistory:
     <div className="stack">
       <div className="page-head">
         <div>
-          <h1>History</h1>
+          <p className="eyebrow">Workspace · History</p>
+          <h1>Focus <em>history</em></h1>
           <p>{weekTotal} minutes of focus in the last 7 days.</p>
         </div>
         <div className="row">
           {history.length === 0 && <button type="button" className="btn" onClick={loadDemo}>Load demo history</button>}
+          {history.some((h) => h.id.startsWith('demo')) && <button type="button" className="btn" onClick={() => setHistory(history.filter((h) => !h.id.startsWith('demo')))}>Clear demo sessions</button>}
           {history.length > 0 && (
             <button type="button" className="btn btn-danger" onClick={() => window.confirm('Delete all logged sessions?') && setHistory([])}>Clear history</button>
           )}
@@ -371,7 +452,7 @@ function History({ history, setHistory }: { history: FocusSession[]; setHistory:
                     <tr key={s.id}>
                       <td>{formatDay(dayOf(s.startedAt))}</td>
                       <td>{new Date(s.startedAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</td>
-                      <td>{s.taskTitle ?? <span className="muted">No task</span>}</td>
+                      <td>{s.taskTitle ? s.taskTitle.replace('Demo: ', '') : <span className="muted">No task</span>} {s.id.startsWith('demo') && <DemoTag />}</td>
                       <td className="num">{s.minutes}</td>
                       <td><span className={`badge ${s.completed ? 'badge-ok' : 'badge-warn'}`}>{s.completed ? 'Completed' : 'Ended early'}</span></td>
                     </tr>
@@ -415,7 +496,7 @@ function SettingsPage({ settings, onSave, sound, setSound }: { settings: Setting
   );
   return (
     <div className="stack narrow">
-      <div className="page-head"><div><h1>Settings</h1><p>Tune the cycle to how you work.</p></div></div>
+      <div className="page-head"><div><p className="eyebrow">Workspace · Settings</p><h1>Your <em>cycle</em></h1><p>Tune focus and break lengths to how you work.</p></div></div>
       <form className="card stack" onSubmit={submit} noValidate>
         <div className="form-grid">
           {num('focusMin', 'Focus length (minutes)', '1–120. Classic Pomodoro is 25.')}
