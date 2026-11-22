@@ -1,0 +1,112 @@
+.hero-timer {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  padding: 18px 0;
+}
+.hero-clock {
+  font-size: 4.5rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.timer-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .timer-layout {
+    grid-template-columns: 1fr;
+  }
+}
+.timer-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 26px;
+}
+.timer-card.phase-short,
+.timer-card.phase-long {
+  --accent: #0f766e;
+  --accent-soft: color-mix(in srgb, #0f766e 12%, var(--surface));
+  --accent-text: #0f766e;
+}
+.clock {
+  font-size: clamp(4rem, 14vw, 7.5rem);
+  font-weight: 800;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  padding: 10px 0;
+}
+.current-task {
+  text-align: center;
+  margin: 0;
+}
+.timer-controls {
+  justify-content: center;
+}
+.btn-lg {
+  padding: 12px 26px;
+  font-size: 1.05rem;
+  min-width: 170px;
+}
+.task-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 90px auto;
+  gap: 10px;
+  align-items: end;
+}
+@media (max-width: 480px) {
+  .task-form {
+    grid-template-columns: 1fr 80px;
+  }
+  .task-form button {
+    grid-column: 1 / -1;
+  }
+}
+.task {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.task .check {
+  flex: 1;
+  min-width: 0;
+}
+.task.is-active .check span {
+  font-weight: 700;
+}
+.day-bars {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+}
+.day-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.day-bar-track {
+  height: 170px;
+  width: 100%;
+  max-width: 46px;
+  background: var(--surface-2);
+  border-radius: 6px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+.day-bar-track div {
+  width: 100%;
+  background: var(--accent);
+}
+.narrow {
+  max-width: 760px;
+}
