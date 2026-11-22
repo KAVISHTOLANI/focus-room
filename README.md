@@ -2,6 +2,8 @@
 
 A calm Pomodoro-style focus timer. Configure focus and break lengths, pick a task, run focus blocks inside a progress ring with a clear in-session state, and review daily focus totals and session history.
 
+**Live demo:** [https://kavishtolani.github.io/focus-room/](https://kavishtolani.github.io/focus-room/) — runs entirely in your browser; demo data is fictional and labelled.
+
 ![Landing with the live timer preview](docs/landing.png)
 
 | Timer | Mobile |
@@ -47,3 +49,7 @@ npm run test:e2e   # Playwright smoke test (npm run e2e:install once if Chromium
 ## Future improvements
 
 - Optional browser notifications; CSV export; editing individual sessions.
+
+## Licence
+
+MIT — see [LICENSE](LICENSE).
