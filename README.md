@@ -1,5 +1,17 @@
 # Focus Room
 
+<!-- screenshots:start -->
+<p align="center">
+  <img src="docs/screenshots/desktop.png" alt="Focus Room on a Mac (1440×900)" width="100%">
+</p>
+<p align="center">
+  <img src="docs/screenshots/tablet.png" alt="Focus Room on a tablet" height="460">
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/phone.png" alt="Focus Room on a phone" height="460">
+</p>
+<p align="center"><sub>Mac (1440×900) · Tablet (820×1180) · Phone (390×844)</sub></p>
+<!-- screenshots:end -->
+
 A calm Pomodoro-style focus timer. Configure focus and break lengths, pick a task, run focus blocks inside a progress ring with a clear in-session state, and review daily focus totals and session history.
 
 **Live demo:** [https://kavishtolani.github.io/focus-room/](https://kavishtolani.github.io/focus-room/) — runs entirely in your browser; demo data is fictional and labelled.
